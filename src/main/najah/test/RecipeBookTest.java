@@ -11,8 +11,7 @@ import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-
-@Execution(ExecutionMode.CONCURRENT) // Parallel execution enabled
+@Execution(ExecutionMode.CONCURRENT)
 @DisplayName("RecipeBook Tests")
 class RecipeBookTest {
     private RecipeBook recipeBook;
@@ -31,11 +30,21 @@ class RecipeBookTest {
         System.out.println("Tear down complete.");
     }
 
+    @BeforeAll
+    static void initAll() {
+        System.out.println("Starting RecipeBook tests...");
+    }
+
+    @AfterAll
+    static void tearDownAll() {
+        System.out.println("Completed all RecipeBook tests.");
+    }
+
     @Test
     @DisplayName("Adding a recipe succeeds")
     void testAddRecipe() {
         assertTrue(recipeBook.addRecipe(recipe));
-        assertFalse(recipeBook.addRecipe(recipe)); // Same recipe can't be added again
+        assertFalse(recipeBook.addRecipe(recipe));
     }
 
     @Test
@@ -43,13 +52,19 @@ class RecipeBookTest {
     void testDeleteRecipe() {
         recipeBook.addRecipe(recipe);
         assertEquals("Coffee", recipeBook.deleteRecipe(0));
-        assertNull(recipeBook.deleteRecipe(0)); // This is correct since second deletion should return null
+        assertNull(recipeBook.deleteRecipe(0)); // now valid since first one deletes it
     }
-    
+
+    @Test
+    @DisplayName("Deleting a recipe from an empty book returns null")
+    void testDeleteInvalidIndex() {
+        assertNull(recipeBook.deleteRecipe(0)); // new test to cover edge case
+    }
+
     @ParameterizedTest
     @CsvSource({
         "Coffee,true",
-        "Coffee,false"  // Adding same recipe again should return false
+        "Coffee,false"
     })
     @DisplayName("Parameterized add recipe test")
     void testAddRecipeParameterized(String name, boolean expected) {
@@ -58,13 +73,12 @@ class RecipeBookTest {
         assertEquals(expected, recipeBook.addRecipe(r));
     }
 
-
     @Test
     @Timeout(value = 1, unit = TimeUnit.SECONDS)
     @DisplayName("Recipe operations should complete within timeout")
     void testRecipeOperationsTimeout() {
         recipeBook.addRecipe(recipe);
-        assertNotNull(recipeBook.getRecipes()[0]);  // Access the recipe at index 0
+        assertNotNull(recipeBook.getRecipes()[0]);
     }
 
     @Test
@@ -88,17 +102,15 @@ class RecipeBookTest {
     @DisplayName("Intentional failure test")
     void testFail() {
         recipeBook.addRecipe(recipe);
-        assertEquals("Tea", recipeBook.getRecipes()[0].getName()); // Fix: change 'Tea' to 'Coffee'
-    }
-    
-
-    @BeforeAll
-    static void initAll() {
-        System.out.println("Starting RecipeBook tests...");
+        assertEquals("Tea", recipeBook.getRecipes()[0].getName()); // should be Coffee not Tea
     }
 
-    @AfterAll
-    static void tearDownAll() {
-        System.out.println("Completed all RecipeBook tests.");
+    @Test
+    @DisplayName("Validate recipe is stored correctly")
+    void testRecipeStoredCorrectly() {
+        recipeBook.addRecipe(recipe);
+        Recipe[] recipes = recipeBook.getRecipes();
+        assertNotNull(recipes[0]);
+        assertEquals("Coffee", recipes[0].getName());
     }
 }
